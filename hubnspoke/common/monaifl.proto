@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package protobufs;
+
+message ParamsRequest {
+  bytes para_request = 1;  
+}
+
+
+message ParamsResponse {  
+  bytes para_response = 2;
+}
+
+// FL service 
+service MonaiFLService{
+  rpc ParamTransfer(ParamsRequest) returns (ParamsResponse);
+  rpc ModelTransfer(ParamsRequest) returns (ParamsResponse);
+  rpc ReportTransfer(ParamsRequest) returns (ParamsResponse);
+  rpc MessageTransfer(ParamsRequest) returns (ParamsResponse);
+  rpc NodeStatus(ParamsRequest) returns (ParamsResponse);
+  rpc TrainedModel(ParamsRequest) returns (ParamsResponse);
+  rpc StopMessage(ParamsRequest) returns (ParamsResponse);
+}

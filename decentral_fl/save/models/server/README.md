@@ -1,0 +1,1 @@
+If this folder does not contain the specified initial model defined in the aggregator/coordinator/src/server.py file, a new model will be initialized and shared with the clients. This will be the initial model that will be use for the client's local training. Once the training is finished, the aggregated model will be saved here.

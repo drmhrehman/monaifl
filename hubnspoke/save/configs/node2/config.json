@@ -1,0 +1,5 @@
+{
+    "trainer": {
+        "epochs": 3
+    }
+}
