@@ -114,8 +114,9 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
 
         logger.info('received test request')
 
+        ma.load_model(headModelFile)
         response_data = Mapping()
-        response_data = ma.predict(class_names, headModelFile)
+        response_data = ma.predict(class_names)
 
         logger.info("sending test report to the Central Hub...")       
         buffer = BytesIO()
