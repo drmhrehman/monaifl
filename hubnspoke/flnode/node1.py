@@ -48,6 +48,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received")
             logger.info(f"global model saved at: {headModelFile}")
+            ma.load_model(headModelFile)
             logger.info("FL node is ready for training and waiting for training configurations")
         else:
             request_data.update(reply="error while receiving the model")
