@@ -48,6 +48,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received")
             logger.info(f"global model saved at: {headModelFile}")
+            ma.load_model(headModelFile)
             logger.info("FL node is ready for training and waiting for training configurations")
         else:
             request_data.update(reply="error while receiving the model")
@@ -113,8 +114,9 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
 
         logger.info('received test request')
 
+        ma.load_model(headModelFile)
         response_data = Mapping()
-        response_data = ma.predict(headModelFile)
+        response_data = ma.predict()
 
         logger.info("sending test report to the Central Hub...")       
         buffer = BytesIO()

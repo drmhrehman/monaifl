@@ -113,10 +113,9 @@ class MonaiAlgo(Algo):
         pass
         # json.dump(model, path)
 
-    def predict(self, class_names, headModelFile):
+    def predict(self, class_names):
         set_determinism(seed=0)
         device = torch.device(DEVICE) 
-        self.load_model(headModelFile)
         self.model.to(device)
         self.model.eval()
 
