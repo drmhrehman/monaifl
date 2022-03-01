@@ -20,6 +20,8 @@ modelpath = os.path.join(cwd, "save","models","hub")
 modelName = "monai-test.pth.tar"
 
 modelFile = os.path.join(modelpath, modelName)
+
+
 w_loc = []
 
 nodes ={  1: {'address': 'localhost:50051'},
@@ -45,16 +47,18 @@ def train_plan(client):
         logger.info(f"client {client.address} is dead...")
     
 def aggregate(client):
+    cpt={}
     try:
         if(client.status() == "alive"):
             logger.info(f"Aggregating with Node: {client.address}...") 
             checkpoint = client.gather()
+            
             for k in checkpoint.keys():
                 if k == "epoch":
-                    #epochs = checkpoint['epoch']
                     logger.info(f"Best Epoch at Client: {checkpoint['epoch']}...") 
                 elif k == "weights":
                     w = checkpoint['weights']
+                    print(w.keys())
                     logger.info(f"Copying weights from {client.address}...")
                     w_loc.append(copy.deepcopy(w))
                     logger.info(f"Aggregating weights from {client.address}...")
@@ -63,15 +67,16 @@ def aggregate(client):
                     logger.info(f"Best Metric at Client: {checkpoint['metric']}..." )
                 else:
                     logger.info(f"Server does not recognized the data sent from {client.address}")
-            cpt = {#'epoch': 1, # to be determined
-                'weights': w_glob#,
-                #'metric': 0 # to be aggregated
-                }
-            t.save(cpt, modelFile)
-            logger.info(f"aggregation with {client.address} completed")
+            #cpt = {#'epoch': 1, # to be determined
+                #'weights': w_glob#,
+            #    #'metric': 0 # to be aggregated
+            #    }
+            #t.save(cpt, modelFile)
+            #logger.info(f"aggregation with {client.address} completed")
+            return w_glob
     except:
         logger.info(f"client {client.address} is dead...")
-
+    return cpt
 def test_plan(client):
     try:
         if(client.status() == "alive"):
@@ -89,11 +94,14 @@ def stop_now(client):
         logger.info(f"client {client.address} is dead...")
     
 
+def aggregate_all(clients):
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        return executor.map(aggregate, clients, timeout=10)
 
 if __name__ == '__main__':
     logger.info("Central Hub initialized")
 
-    global_round = 1
+    global_round = 2
 
     for round in range(global_round):
         if (round==0):
@@ -102,9 +110,10 @@ if __name__ == '__main__':
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             result = executor.map(train_plan, clients)    
-
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            result = executor.map(aggregate, clients)   
+        
+        results = aggregate_all(clients)
+        for result in results:
+            print(result)
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             result = executor.map(test_plan, clients)    
@@ -118,3 +127,4 @@ if __name__ == '__main__':
     # all processes are excuted 
     logger.info(f"Done! Model Training is completed across all sites and current global model is available at following location...{modelFile}")
 
+    

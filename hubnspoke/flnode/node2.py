@@ -44,6 +44,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def ModelTransfer(self, request, context):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
+        print(request_data['features.conv0.weight'])
         t.save(request_data, headModelFile)
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received")
@@ -105,6 +106,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def ReportTransfer(self, request, context):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
+        print(request_data['features.conv0.weight'])
         t.save(request_data, headModelFile)
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received for testing")
