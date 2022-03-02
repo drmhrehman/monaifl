@@ -45,38 +45,30 @@ def train_plan(client):
             client.train()
     except:
         logger.info(f"client {client.address} is dead...")
-    
-def aggregate(client):
-    cpt={}
+
+
+def collect_models(client):
+    checkpoint = None
     try:
         if(client.status() == "alive"):
-            logger.info(f"Aggregating with Node: {client.address}...") 
+            logger.info(f"Collecting with Node: {client.address}...")
             checkpoint = client.gather()
-            
-            for k in checkpoint.keys():
-                if k == "epoch":
-                    logger.info(f"Best Epoch at Client: {checkpoint['epoch']}...") 
-                elif k == "weights":
-                    w = checkpoint['weights']
-                    print(w.keys())
-                    logger.info(f"Copying weights from {client.address}...")
-                    w_loc.append(copy.deepcopy(w))
-                    logger.info(f"Aggregating weights from {client.address}...")
-                    w_glob = FedAvg(w_loc)
-                elif k == "metric":
-                    logger.info(f"Best Metric at Client: {checkpoint['metric']}..." )
-                else:
-                    logger.info(f"Server does not recognized the data sent from {client.address}")
-            #cpt = {#'epoch': 1, # to be determined
-                #'weights': w_glob#,
-            #    #'metric': 0 # to be aggregated
-            #    }
-            #t.save(cpt, modelFile)
-            #logger.info(f"aggregation with {client.address} completed")
-            return w_glob
     except:
         logger.info(f"client {client.address} is dead...")
-    return cpt
+    return checkpoint['weights']
+
+
+def aggregate_weights(weights):
+    logger.info(f"Aggregating data from {len(weights)} nodes...")
+    global_weights = FedAvg(weights)
+
+    hub_checkpoint = {
+        'weights': global_weights
+    }
+    t.save(hub_checkpoint, modelFile)
+    logger.info(f"Aggregation completed")
+
+
 def test_plan(client):
     try:
         if(client.status() == "alive"):
@@ -94,10 +86,6 @@ def stop_now(client):
         logger.info(f"client {client.address} is dead...")
     
 
-def aggregate_all(clients):
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        return executor.map(aggregate, clients, timeout=10)
-
 if __name__ == '__main__':
     logger.info("Central Hub initialized")
 
@@ -110,10 +98,12 @@ if __name__ == '__main__':
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             result = executor.map(train_plan, clients)    
-        
-        results = aggregate_all(clients)
-        for result in results:
-            print(result)
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            result = executor.map(collect_models, clients)
+
+        weights = list(result)
+        aggregate_weights(weights)
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             result = executor.map(test_plan, clients)    
@@ -126,5 +116,3 @@ if __name__ == '__main__':
     
     # all processes are excuted 
     logger.info(f"Done! Model Training is completed across all sites and current global model is available at following location...{modelFile}")
-
-    
