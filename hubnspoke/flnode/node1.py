@@ -44,7 +44,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def ModelTransfer(self, request, context):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
-        print(request_data['features.conv0.weight'][0,0,0])
+        print(f"Weights at the beginning of global epoch: {request_data['features.conv0.weight'][0,0,0]}...")
         t.save(request_data, headModelFile)
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received")
@@ -100,13 +100,14 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
                 logger.info(f"sending trained model {trunkModelFile} to the central Hub...") 
                 checkpoint = t.load(trunkModelFile)
                 t.save(checkpoint, buffer)
+        print(f"Weights at the end of global epoch: {checkpoint['weights']['features.conv0.weight'][0,0,0]}...")
 
         return ParamsResponse(para_response=buffer.getvalue())
     
     def ReportTransfer(self, request, context):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
-        print(request_data['features.conv0.weight'][0,0,0])
+        print(f"Weights after aggregation: {request_data['features.conv0.weight'][0,0,0]}")
         t.save(request_data, headModelFile)
         if os.path.isfile(headModelFile):
             request_data.update(reply="model received for testing")
